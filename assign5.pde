@@ -30,6 +30,7 @@ final float CLOCK_BONUS_SECONDS = 15f;
 
 float playerX, playerY;
 int playerCol, playerRow;
+int soldierCol, soldierRow;
 final float PLAYER_INIT_X = 4 * SOIL_SIZE;
 final float PLAYER_INIT_Y = - SOIL_SIZE;
 boolean leftState = false;
@@ -106,7 +107,7 @@ void initGame(){
 	initCabbages();
 
 	// Requirement #2: Initialize clocks and their position
-
+  initClocks();
 }
 
 void initPlayer(){
@@ -177,6 +178,8 @@ void initSoldiers(){
 	for(int i = 0; i < soldierX.length; i++){
 		soldierX[i] = random(-SOIL_SIZE, width);
 		soldierY[i] = SOIL_SIZE * ( i * 4 + floor(random(4)));
+    soldierCol = (int) soldierX[i] / SOIL_SIZE;
+    soldierRow = (int) soldierY[i] / SOIL_SIZE;
 	}
 }
 
@@ -193,6 +196,22 @@ void initCabbages(){
 void initClocks(){
 	// Requirement #1: Complete this method based on initCabbages()
 	// - Remember to reroll if the randomized position has a cabbage on the same soil!
+  clockX = new float[6];
+  clockY = new float[6];
+
+  for(int i = 0; i < clockX.length; i++)
+  {
+    int count = 1;
+    for(int j = 0; j < count; j++)
+    {
+      clockX[i] = SOIL_SIZE * floor(random(SOIL_COL_COUNT));
+      clockY[i] = SOIL_SIZE * ( i * 4 + floor(random(4)));
+      if(clockX[i] == cabbageX[i] && clockY[i] == cabbageY[i])
+      {
+        j--;
+      }
+    }
+  }
 }
 
 void draw() {
@@ -300,8 +319,21 @@ void draw() {
 		}
 
 		// Requirement #1: Clocks
+    for(int i = 0; i < clockX.length; i++)
+    {
+      image(clock, clockX[i], clockY[i]);
+    
 		// --- Requirement #3: Use boolean isHit(...) to detect clock <-> player collision
-
+      if(gameTimer < GAME_INIT_TIMER
+      && clockX[i] + SOIL_SIZE > playerX    // r1 right edge past r2 left
+        && clockX[i] < playerX + SOIL_SIZE    // r1 left edge past r2 right
+        && clockY[i] + SOIL_SIZE > playerY    // r1 top edge past r2 bottom
+        && clockY[i] < playerY + SOIL_SIZE)  // r1 bottom edge past r2 top
+      {
+        gameTimer += 900;
+        clockX[i] = clockY[i] = -1000;
+      }
+    }
 		// Groundhog
 
 		PImage groundhogDisplay = groundhogIdle;
@@ -448,6 +480,12 @@ void draw() {
 
 		// Requirement #6:
 		//   Call drawCaution() to draw caution sign
+    for(int i = 0; i < soldierX.length; i++){
+      soldierRow = (int) soldierY[i] / SOIL_SIZE;
+      if (soldierRow > playerRow + 4){
+        image(caution,soldierX[i],soldierY[i]-80);
+      }
+    }
 
 		popMatrix();
 
@@ -526,8 +564,9 @@ void drawDepthUI(){
 }
 
 void drawTimerUI(){
-	String timeString = str(gameTimer); // Requirement #4: Get the mm:ss string using String convertFramesToTimeString(int frames)
-
+	String timeString = nf ((gameTimer/60) % 60 , 2); // Requirement #4: Get the mm:ss string using String convertFramesToTimeString(int frames)
+  String timeStringMin = nf (floor(gameTimer/3600) , 2);
+  
 	textAlign(LEFT, BOTTOM);
 
 	// Time Text Shadow Effect - You don't have to change this!
@@ -535,9 +574,28 @@ void drawTimerUI(){
 	text(timeString, 3, height + 3);
 
 	// Actual Time Text
-	color timeTextColor = #ffffff; 		// Requirement #5: Get the correct color using color getTimeTextColor(int frames)
-	fill(timeTextColor);
-	text(timeString, 0, height);
+	if(gameTimer/60 >= 120){
+    color timeTextColor = #00ffff; 		// Requirement #5: Get the correct color using color getTimeTextColor(int frames)
+  	fill(timeTextColor);
+  }
+  if(gameTimer/60 < 120 && gameTimer/60 >= 60){
+    color timeTextColor = #ffffff;     // Requirement #5: Get the correct color using color getTimeTextColor(int frames)
+    fill(timeTextColor);
+  }
+  if(gameTimer/60 < 60 && gameTimer/60 >= 30){
+    color timeTextColor = #ffcc00;     // Requirement #5: Get the correct color using color getTimeTextColor(int frames)
+    fill(timeTextColor);
+  }
+  if(gameTimer/60 < 30 && gameTimer/60 > 10){
+    color timeTextColor = #ff6600;     // Requirement #5: Get the correct color using color getTimeTextColor(int frames)
+    fill(timeTextColor);
+  }
+  if(gameTimer/60 < 10){
+    color timeTextColor = #ff0000;     // Requirement #5: Get the correct color using color getTimeTextColor(int frames)
+    fill(timeTextColor);
+  }
+  text(timeStringMin + ":" + timeString, 0, height);
+  
 }
 
 void addTime(float seconds){					// Requirement #2
@@ -548,7 +606,7 @@ boolean isHit(float ax, float ay, float aw, float ah, float bx, float by, float 
 }
 
 String convertFramesToTimeString(int frames){	// Requirement #4
-	return "";
+  return "";
 }
 
 color getTimeTextColor(int frames){				// Requirement #5
@@ -573,6 +631,7 @@ void drawCaution(){								// Requirement #6
 		// - Use playerRow to calculate the row below the screen
 		// - Use the returned value from int getEnemyIndexByRow(int row) to get the soldier's position from soldierX/soldierY arrays
 		// - Don't draw anything if int getEnemyIndexByRow(int row) returns -1
+
 }
 
 void keyPressed(){
