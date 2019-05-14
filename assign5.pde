@@ -571,7 +571,7 @@ void drawTimerUI(){
 
 	// Time Text Shadow Effect - You don't have to change this!
 	fill(0, 120);
-	text(timeString, 3, height + 3);
+	text(timeStringMin + ":" + timeString, 3, height + 3);
 
 	// Actual Time Text
 	if(gameTimer/60 >= 120){
